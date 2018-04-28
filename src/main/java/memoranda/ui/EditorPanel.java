@@ -28,8 +28,8 @@ import javax.swing.text.html.HTMLDocument;
 
 import main.java.memoranda.CurrentNote;
 import main.java.memoranda.History;
-import main.java.memoranda.Note;
 import main.java.memoranda.date.CurrentDate;
+import main.java.memoranda.interfaces.INote;
 import main.java.memoranda.ui.htmleditor.HTMLEditor;
 import main.java.memoranda.util.Configuration;
 import main.java.memoranda.util.Context;
@@ -495,14 +495,14 @@ public class EditorPanel extends JPanel {
 
 	String initialTitle = "";
 
-	public void setDocument(Note note) {
+	public void setDocument(INote iNote) {
 		// Note note = CurrentProject.getNoteList().getActiveNote();
 		// try {
 		// this.editor.editor.setPage(CurrentStorage.get().getNoteURL(note));
-		editor.document = (HTMLDocument) CurrentStorage.get().openNote(note);
+		editor.document = (HTMLDocument) CurrentStorage.get().openNote(iNote);
 		editor.initEditor();
-		if (note != null)
-			titleField.setText(note.getTitle());
+		if (iNote != null)
+			titleField.setText(iNote.getTitle());
 		else
 			titleField.setText("");
 		initialTitle = titleField.getText();

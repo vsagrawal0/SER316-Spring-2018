@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import main.java.memoranda.date.CalendarDate;
+import main.java.memoranda.interfaces.IEvent;
 import main.java.memoranda.util.CurrentStorage;
 import main.java.memoranda.util.Util;
 
@@ -112,7 +113,7 @@ public class EventsManager {
 		return v;
 	}
 
-	public static Event createEvent(
+	public static IEvent createEvent(
 		CalendarDate date,
 		int hh,
 		int mm,
@@ -129,7 +130,7 @@ public class EventsManager {
 		return new EventImpl(el);
 	}
 
-	public static Event createRepeatableEvent(
+	public static IEvent createRepeatableEvent(
 		int type,
 		CalendarDate startDate,
 		CalendarDate endDate,
@@ -174,7 +175,7 @@ public class EventsManager {
 		Vector reps = (Vector) getRepeatableEvents();
 		Vector v = new Vector();
 		for (int i = 0; i < reps.size(); i++) {
-			Event ev = (Event) reps.get(i);
+			IEvent ev = (IEvent) reps.get(i);
 			
 			// --- ivanrise
 			// ignore this event if it's a 'only working days' event and today is weekend.
@@ -189,7 +190,13 @@ public class EventsManager {
 			//System.out.println(date.inPeriod(ev.getStartDate(),
 			// ev.getEndDate()));
 			if (date.inPeriod(ev.getStartDate(), ev.getEndDate())) {
-				if (ev.getRepeat() == REPEAT_DAILY) {
+			    
+			    //SER316 fix
+			    if (isRepeated(ev, date)) {
+                    v.add(ev);
+			    } 
+			    
+			    else if (ev.getRepeat() == REPEAT_DAILY) {
 					int n = date.getCalendar().get(Calendar.DAY_OF_YEAR);
 					int ns =
 						ev.getStartDate().getCalendar().get(
@@ -197,34 +204,31 @@ public class EventsManager {
 					//System.out.println((n - ns) % ev.getPeriod());
 					if ((n - ns) % ev.getPeriod() == 0)
 						v.add(ev);
-				} else if (ev.getRepeat() == REPEAT_WEEKLY) {
-					if (date.getCalendar().get(Calendar.DAY_OF_WEEK)
-						== ev.getPeriod())
-						v.add(ev);
-				} else if (ev.getRepeat() == REPEAT_MONTHLY) {
-					if (date.getCalendar().get(Calendar.DAY_OF_MONTH)
-						== ev.getPeriod())
-						v.add(ev);
+				
 				} else if (ev.getRepeat() == REPEAT_YEARLY) {
 					int period = ev.getPeriod();
 					//System.out.println(date.getCalendar().get(Calendar.DAY_OF_YEAR));
 					if ((date.getYear() % 4) == 0
 						&& date.getCalendar().get(Calendar.DAY_OF_YEAR) > 60)
 						period++;
-
-					if (date.getCalendar().get(Calendar.DAY_OF_YEAR) == period)
-						v.add(ev);
 				}
 			}
 		}
 		return v;
+	}
+	
+	//SER316 fix
+	public static boolean isRepeated(IEvent ev, CalendarDate date) {
+	    return ((ev.getRepeat() == REPEAT_WEEKLY && date.getCalendar().get(Calendar.DAY_OF_WEEK) == ev.getPeriod())
+                || (ev.getRepeat() == REPEAT_MONTHLY && (date.getCalendar().get(Calendar.DAY_OF_MONTH) == ev.getPeriod()))
+                || (ev.getRepeat() == REPEAT_YEARLY && date.getCalendar().get(Calendar.DAY_OF_YEAR) == ev.getPeriod()));
 	}
 
 	public static Collection getActiveEvents() {
 		return getEventsForDate(CalendarDate.today());
 	}
 
-	public static Event getEvent(CalendarDate date, int hh, int mm) {
+	public static IEvent getEvent(CalendarDate date, int hh, int mm) {
 		Day d = getDay(date);
 		if (d == null)
 			return null;
@@ -246,7 +250,7 @@ public class EventsManager {
 			d.getElement().removeChild(getEvent(date, hh, mm).getContent());
 	}
 
-	public static void removeEvent(Event ev) {
+	public static void removeEvent(IEvent ev) {
 		ParentNode parent = ev.getContent().getParent();
 		parent.removeChild(ev.getContent());
 	}
